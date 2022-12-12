@@ -13,7 +13,7 @@ router.get('/get', controller.buscaProducto)
 //Eliminar Producto 
 router.delete('/:id', controller.eliminaProducto)
 //Actualizar stock rol vendedor
-router.put('/venta/:id', actualzaStockV)
+router.put('/venta/:id', controller.actualizaStockV)
 
 //USUARIOS
 //crear nuevo usuario

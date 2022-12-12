@@ -63,11 +63,11 @@ exports.actualizaProducto = async function(req, res){
     console.log(productoNuevo)
 };
 
-exports.actualizarStockV = async function(req,res,_){
+exports.actualizaStockV = async function(req,res,_){
   
-    const productoEd = await Productos.findOneAndUpdate({_id: req.params.id}, {stock: req.body.stock})
-    res.status(200)
-    console.log(productoEd)
+  const productoEd = await Productos.findOneAndUpdate({_id: req.params.id}, {stock: req.body.stock})
+  res.status(200)
+  console.log(productoEd)
 }
 
 exports.buscaProducto = async function(req, res, _){
