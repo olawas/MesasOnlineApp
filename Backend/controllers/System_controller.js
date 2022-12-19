@@ -1,4 +1,4 @@
-const {Productos, usuarios} = require('../models/Schemas')
+const {Productos, usuarios, Mesas} = require('../models/Schemas')
 
 exports.creaUsuario = async function(req,res){
     const usuario = new usuarios({
@@ -90,4 +90,15 @@ exports.eliminaProducto = async function(req,res,_){
 exports.eliminarUsuario = async function(req, res, _){
     const user = await usuarios.findOneAndDelete({_id: '6372639c6de332a5499ca24f'})
     res.send("Se elimino " + user)
+}
+
+exports.crearMesa = async function(req,res,_){
+  const mesa = new Mesas({
+    numero: req.body.numero
+  })
+}
+
+exports.getMesas = async function(req,res,_){
+  const mesas = await Mesas.find()
+  res.json(mesas)
 }

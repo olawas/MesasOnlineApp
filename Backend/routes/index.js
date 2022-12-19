@@ -21,6 +21,12 @@ router.post('/user/post', controller.creaUsuario)
 //Eliminar usuario
 router.delete('/user/delete', controller.eliminarUsuario)
 
+//MESAS
+//crear nueva mesa
+router.post('/mesa/post', controller.crearMesa)
+//buscarMesas
+router.get("/mesas/get",controller.getMesas)
+
 //Autorizar y Autenticar rolAdmin y rolVendedor
 router.get('/user', authorize(['admin']), function(req,res,next){
   res.json('authorized user')
