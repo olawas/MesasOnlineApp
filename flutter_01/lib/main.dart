@@ -70,7 +70,7 @@ class _HomePageState extends State<HomePage> {
   }
   getMesas() async {
     http.Response response =
-        await http.get(Uri.parse('http://localhost:3000/mesas/get'));
+        await http.get(Uri.parse('http://localhost:3000/mongo/mesas/get'));
       setState(() {
       mesasLista = json.decode(response.body) as List;
     });

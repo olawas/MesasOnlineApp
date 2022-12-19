@@ -96,6 +96,18 @@ exports.crearMesa = async function(req,res,_){
   const mesa = new Mesas({
     numero: req.body.numero
   })
+  const mesaSaved = await mesa
+  .save(mesa)
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "un error ha sucedido al guardar producto"
+    })
+  })
+  console.log("Se ha creado MESA numero "+ mesaSaved.numero)
 }
 
 exports.getMesas = async function(req,res,_){
