@@ -23,7 +23,9 @@ exports.creaProducto = async function(req,res) {
     const producto = new Productos({
         nombre: req.body.nombre,
         precio: req.body.precio,
-        stock: req.body.stock
+        stock: req.body.stock,
+        medida: req.body.medida,
+        cantidad: req.body.cantidad
     })
     const productoSaved = await producto
     .save(producto)
@@ -37,6 +39,27 @@ exports.creaProducto = async function(req,res) {
       })
     })
     console.log("Se ha creado "+ productoSaved.nombre)
+}
+
+exports.creaProducto = async function(req,res) {
+    const producto = new Productos({
+        nombre: req.body.nombre,
+        precio: req.body.precio,
+        stock: req.body.stock,
+        tipo: req.body.tipo //1: Platos, 2: Jugos, 3: Licores
+    })
+    const productoSaved = await producto
+    .save(producto)
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "un error ha sucedido al guardar producto"
+      })
+    })
+    //////////////console.log("Se ha creado "+ productoSaved.nombre)
 }
 
 exports.actualizaProducto = async function(req, res){

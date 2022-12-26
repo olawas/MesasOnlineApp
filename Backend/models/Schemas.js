@@ -18,13 +18,9 @@ const ProductSchema = new Schema(
             type: Number, 
             required: true
         },
-        medida: {
+        tipo: {
             type: String,
             required: true
-        },
-        cantidad: {
-            type: Number,
-            required: false
         }
     },
     { timestamps: true },

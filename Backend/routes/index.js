@@ -15,6 +15,7 @@ router.delete('/:id', controller.eliminaProducto)
 //Actualizar stock rol vendedor
 router.put('/venta/:id', controller.actualizaStockV)
 
+
 //USUARIOS
 //crear nuevo usuario
 router.post('/user/post', controller.creaUsuario)
@@ -25,7 +26,7 @@ router.delete('/user/delete', controller.eliminarUsuario)
 //crear nueva mesa
 router.post('/mesa/post', controller.crearMesa)
 //buscarMesas
-router.get("/mesas/get",controller.getMesas)
+router.get("/mesa/get",controller.getMesas)
 
 //Autorizar y Autenticar rolAdmin y rolVendedor
 router.get('/user', authorize(['admin']), function(req,res,next){

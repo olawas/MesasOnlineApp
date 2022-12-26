@@ -80,6 +80,7 @@ class _HomePageState extends State<HomePage> {
   initState() {
     super.initState();
     getProductos();
+    getMesas();
   }
 
   Widget build(BuildContext context) {
@@ -96,7 +97,7 @@ class _HomePageState extends State<HomePage> {
     }
     return Scaffold(
         appBar: AppBar(
-          title: Text('Product List'),
+          title: Text('Carta'),
           backgroundColor: Color.fromARGB(255, 199, 151, 48),
         ),
         body: 
@@ -124,7 +125,7 @@ class _HomePageState extends State<HomePage> {
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                             text: TextSpan(
-                                text: 'Name: ',
+                                text: 'Nombre: ',
                                 style: TextStyle(
                                     color: Colors.blueGrey.shade800,
                                     fontSize: 16.0),
@@ -139,7 +140,7 @@ class _HomePageState extends State<HomePage> {
                           RichText(
                             maxLines: 1,
                             text: TextSpan(
-                                text: 'Unit: ',
+                                text: 'Quedan: ',
                                 style: TextStyle(
                                     color: Colors.blueGrey.shade800,
                                     fontSize: 16.0),
@@ -154,7 +155,7 @@ class _HomePageState extends State<HomePage> {
                           RichText(
                             maxLines: 1,
                             text: TextSpan(
-                                text: 'Price: ' r"$",
+                                text: 'Precio: ' r"$",
                                 style: TextStyle(
                                     color: Colors.blueGrey.shade800,
                                     fontSize: 16.0),
@@ -175,7 +176,7 @@ class _HomePageState extends State<HomePage> {
                         onPressed: () {
                           saveData(index);
                         },
-                        child: const Text('Add to Cart')),
+                        child: const Text('Añadir a comanda!')),
                   ],
                 ),
               ),
@@ -197,7 +198,8 @@ class ComandaWidget extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.push(context,MaterialPageRoute(builder: (context)=>MesasWidget()));
+            debugPrint("$mesasLista");
           },
           child: ListView.builder(
             itemCount: carritoCompras?.length,
@@ -222,7 +224,7 @@ class ComandaWidget extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                             text: TextSpan(
-                                text: 'Name: ',
+                                text: 'Nombre: ',
                                 style: TextStyle(
                                     color: Colors.blueGrey.shade800,
                                     fontSize: 16.0),
@@ -238,7 +240,7 @@ class ComandaWidget extends StatelessWidget {
                           RichText(
                             maxLines: 1,
                             text: TextSpan(
-                                text: 'Price: ' r"$",
+                                text: 'Precio: ' r"$",
                                 style: TextStyle(
                                     color: Colors.blueGrey.shade800,
                                     fontSize: 16.0),
@@ -265,7 +267,13 @@ class ComandaWidget extends StatelessWidget {
   }
 }
 class MesasWidget extends StatelessWidget {
-
+String getEstadoMesa(index){
+  if(mesasLista?[index]["estado"] == false){
+    return 'Disponible';
+  }else{
+    return "En uso";
+  }
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -278,7 +286,7 @@ class MesasWidget extends StatelessWidget {
             Navigator.pop(context);
           },
           child: ListView.builder(
-            itemCount: carritoCompras?.length,
+            itemCount: mesasLista?.length,
             itemBuilder: (BuildContext context, int index) {
               return Card(color: Colors.blueGrey.shade200,
               elevation: 5.0,
@@ -316,14 +324,13 @@ class MesasWidget extends StatelessWidget {
                           RichText(
                             maxLines: 1,
                             text: TextSpan(
-                                text: 'Price: ' r"$",
+                                text: 'Estado: ',
                                 style: TextStyle(
                                     color: Colors.blueGrey.shade800,
                                     fontSize: 16.0),
                                 children: [
                                   TextSpan(
-                                      text:
-                                          '${mesasLista?[index]["estado"].toString()}',
+                                      text:getEstadoMesa(index),
                                       style: const TextStyle(
                                           fontWeight: FontWeight.bold)),
                                 ]),
