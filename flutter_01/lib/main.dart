@@ -514,6 +514,25 @@ class _HomePageState extends State<HomePage> {
 }
 
 class ComandaWidget extends StatelessWidget {
+<<<<<<< Updated upstream
+=======
+  String getCantidad(a) {
+    return carritoCompras[a]["cantidad"].toString();
+  }
+
+  String getPrecioTotal() {
+    int total = 0;
+    for (int i = 0; i <= carritoCompras.length; i++) {
+      /*int cantidad = carritoCompras[i]["cantidad"];
+      int precio = carritoCompras[i]["precio"];
+      int totalProducto = cantidad * precio;
+      total += totalProducto;*/
+      print(carritoCompras[i]["precio"]);
+    }
+    return total.toString();
+  }
+
+>>>>>>> Stashed changes
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -521,6 +540,7 @@ class ComandaWidget extends StatelessWidget {
         title: Text("Comanda"),
       ),
       body: Center(
+<<<<<<< Updated upstream
         child: ElevatedButton(
             onPressed: () {
               Navigator.push(context,
@@ -586,6 +606,92 @@ class ComandaWidget extends StatelessWidget {
                     ),
                   );
                 })),
+=======
+        child: Row(children: <Widget>[
+          ListView.builder(
+              itemCount: carritoCompras.length,
+              itemBuilder: (BuildContext context, int index) {
+                //cantidad?[index] = 1;
+                return Card(
+                  color: Colors.blueGrey.shade200,
+                  elevation: 5.0,
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        SizedBox(
+                          width: 300,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(
+                                height: 5.0,
+                              ),
+                              RichText(
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                text: TextSpan(
+                                    text: 'Nombre: ',
+                                    style: TextStyle(
+                                        color: Colors.blueGrey.shade800,
+                                        fontSize: 16.0),
+                                    children: [
+                                      TextSpan(
+                                          text:
+                                              '${carritoCompras[index]["nombre"].toString()}\n',
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                    ]),
+                              ),
+                              RichText(
+                                maxLines: 1,
+                                text: TextSpan(
+                                    text: 'Precio: ' r"$",
+                                    style: TextStyle(
+                                        color: Colors.blueGrey.shade800,
+                                        fontSize: 16.0),
+                                    children: [
+                                      TextSpan(
+                                          text: carritoCompras[index]["precio"]
+                                              .toString(),
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                    ]),
+                              ),
+                            ],
+                          ),
+                        ),
+                        FloatingActionButton(
+                            onPressed: () {
+                              carritoCompras[index]["cantidad"]--;
+                              (context as Element).markNeedsBuild();
+                            },
+                            child: const Icon(Icons.remove)),
+                        Text(getCantidad(index)),
+                        FloatingActionButton(
+                            onPressed: () {
+                              carritoCompras[index]["cantidad"]++;
+                              (context as Element).markNeedsBuild();
+                            },
+                            child: const Icon(Icons.add)),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+          Text("Hola")
+        ]),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => ComandaWidget()))
+        },
+        backgroundColor: Colors.green,
+        child: const Icon(Icons.bookmark_sharp),
+>>>>>>> Stashed changes
       ),
     );
   }
