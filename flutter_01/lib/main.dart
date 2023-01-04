@@ -1,28 +1,18 @@
 /*
-
-  Lista de funcionalidades a aplicar:
-    * Acceder a la camara: 
-    * Crear QR para una mesa:
-    * Poder ingresar a mesa con QR creado:
-    * Llamar a los productos desde la bd: Completado
-    * Bajar stock a medida que se cobra:
-    * Notificacion a Mesero  cuando se realiza un pedido:
+  Crear Archivo .env
+  DB_URL =mongodb+srv://CiervoZombie:colocolino0709@cluster0.jc1bzfr.mongodb.net/?retryWrites=true&w=majority
+  JWT_KEY = my-32-character-ultra-secure-and-ultra-long-secret
   
-  Widgets a crear:
-    * Mesa (Lista de productos, con boton para seleccionar el deseado)
-    * Comanda (Lista de productos seleccionados por el cliente, 
-      con opcion de cambiar cantidad mostrando el total, boton de Ordenar!)
-    * Acceso Mesa (Se accede a la camara y lee el QR para acceder a la mesa
-      correspondiente)
-    * Mesero  (Muestra las mesas {Ocupada, Disponible}, con sus respectivos 
-      botones para crear QR o cobrar)
-    * Cobrar Mesero  (Muestra el precio total a cobrar al cliente mas un boton precio
-      donde el Mesero  indica que se realizo el cobro)
+  Como compilar
+  en backend utilizar comando npm install y npm run start
+  en FrontEnd utilizar comando flutter run 
 
 */
 
+import 'dart:html';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_01/probando.dart';
+
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
@@ -30,7 +20,8 @@ import 'dart:developer' as developer;
 
 List carritoCompras = [];
 List? cantidadComprar = [];
-List? mesasLista = [];
+List? mesasLista;
+
 void main() {
   runApp(
     MaterialApp(home: HomePage()),
@@ -60,14 +51,19 @@ class _HomePageState extends State<HomePage> {
         await http.get(Uri.parse('http://localhost:3000/mongo/get'));
     setState(() {
       productosData = json.decode(response.body) as List;
+      
     });
   }
 
   getMesas() async {
     http.Response response =
-        await http.get(Uri.parse('http://localhost:3000/mongo/mesas/get'));
+        await http.get(Uri.parse('http://localhost:3000/mongo/mesa/get'));
     setState(() {
       mesasLista = json.decode(response.body) as List;
+      print("\nMesas: \n");
+      print(mesasLista?.length);
+      print(mesasLista?[0]["estado"]);
+
     });
   }
 
@@ -108,6 +104,10 @@ class _HomePageState extends State<HomePage> {
         child: Scaffold(
             appBar: AppBar(
               title: Text('Carta'),
+              actions: <Widget>[
+                IconButton(onPressed: (){ Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => PrincipalWidget()));}, icon: Icon(Icons.add_to_home_screen_sharp))
+              ],
               bottom: const TabBar(
                 tabs: <Widget>[
                   Tab(
@@ -215,9 +215,9 @@ class _HomePageState extends State<HomePage> {
                                           'id': productosData?[index]["_id"],
                                           'nombre': productosData?[index]
                                               ["nombre"],
-                                          'precio': [
+                                          'precio': 
                                             productosData?[index]["precio"]
-                                          ],
+                                          ,
                                           'stock': productosData?[index]
                                               ["stock"],
                                           'cantidad': 1
@@ -329,9 +329,9 @@ class _HomePageState extends State<HomePage> {
                                           'id': productosData?[index]["_id"],
                                           'nombre': productosData?[index]
                                               ["nombre"],
-                                          'precio': [
+                                          'precio': 
                                             productosData?[index]["precio"]
-                                          ],
+                                          ,
                                           'stock': productosData?[index]
                                               ["stock"],
                                           'cantidad': 1
@@ -443,9 +443,9 @@ class _HomePageState extends State<HomePage> {
                                           'id': productosData?[index]["_id"],
                                           'nombre': productosData?[index]
                                               ["nombre"],
-                                          'precio': [
+                                          'precio': 
                                             productosData?[index]["precio"]
-                                          ],
+                                          ,
                                           'stock': productosData?[index]
                                               ["stock"],
                                           'cantidad': 1
@@ -479,12 +479,57 @@ class _HomePageState extends State<HomePage> {
             )));
   }
 }
-
+class PrincipalWidget extends StatelessWidget{
+  @override 
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Principal"),
+        actions: <Widget>[
+          IconButton(onPressed: (){ Navigator.pop(context);}, icon: Icon(Icons.add_to_home_screen_sharp))
+        ],
+      ),
+      body: Center(
+        child: Text(
+        "Bienvenido a MesasOnlineApp",
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 40.0,
+        ),
+      ),
+    ),
+    floatingActionButton: ButtonTheme(
+        minWidth: 400,
+        height: 500,
+        child:ElevatedButton.icon(
+        label: Text("Soy Garzon"),
+        style: ElevatedButton.styleFrom(
+                fixedSize: const Size(240, 80), backgroundColor: Colors.deepOrange),
+        icon: Icon(Icons.arrow_circle_right_sharp),
+        onPressed: () => {
+          Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => MesasWidget()))
+          
+        },
+      )),
+    );
+  }
+}
 class ComandaWidget extends StatelessWidget {
   String getCantidad(a) {
     return carritoCompras[a]["cantidad"].toString();
   }
-
+  int getTotal(){
+    int total = 0;
+    carritoCompras.forEach((element) {
+      int precio = element["precio"];
+      int cantidad = element["cantidad"];
+      total += precio*cantidad;
+      
+    });
+    return total;
+    
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -494,7 +539,7 @@ class ComandaWidget extends StatelessWidget {
       body: Center(
         child: ListView.builder(
             itemCount: carritoCompras.length,
-            itemBuilder: (BuildContext context, int index) {
+            itemBuilder: (BuildContext contex1, int index) {
               //cantidad?[index] = 1;
               return Card(
                 color: Colors.blueGrey.shade200,
@@ -551,6 +596,7 @@ class ComandaWidget extends StatelessWidget {
                           onPressed: () {
                             carritoCompras[index]["cantidad"]--;
                             (context as Element).markNeedsBuild();
+                            
                           },
                           child: const Icon(Icons.remove)),
                       Text(getCantidad(index)),
@@ -566,22 +612,147 @@ class ComandaWidget extends StatelessWidget {
               );
             }),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: ButtonTheme(
+        minWidth: 400,
+        height: 500,
+        child:ElevatedButton.icon(
+        label: Text(getTotal().toString()),
+        style: ElevatedButton.styleFrom(
+                fixedSize: const Size(240, 80), backgroundColor: Colors.deepOrange),
+        icon: Icon(Icons.arrow_circle_right_sharp),
         onPressed: () => {
-          Navigator.push(
-              context, MaterialPageRoute(builder: (context) => ComandaWidget()))
+          
+          (context as Element).markNeedsBuild(),
+          Navigator.pop(context)
         },
-        backgroundColor: Colors.green,
-        child: const Icon(Icons.bookmark_sharp),
-      ),
+      )),
+
     );
   }
 }
+class ComandaMesasWidget extends StatelessWidget {
+  String getCantidad(a) {
+    return carritoCompras[a]["cantidad"].toString();
+  }
+  int getTotal(){
+    int total = 0;
+    carritoCompras.forEach((element) {
+      int precio = element["precio"];
+      int cantidad = element["cantidad"];
+      total += precio*cantidad;
+      
+    });
+    return total;
+    
+  }
 
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Comanda Mesa 1"),
+      ),
+      body: Center(
+        child: ListView.builder(
+            itemCount: carritoCompras.length,
+            itemBuilder: (BuildContext contex1, int index) {
+              //cantidad?[index] = 1;
+              return Card(
+                color: Colors.blueGrey.shade200,
+                elevation: 5.0,
+                child: Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      SizedBox(
+                        width: 300,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(
+                              height: 5.0,
+                            ),
+                            RichText(
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              text: TextSpan(
+                                  text: 'Nombre: ',
+                                  style: TextStyle(
+                                      color: Colors.blueGrey.shade800,
+                                      fontSize: 16.0),
+                                  children: [
+                                    TextSpan(
+                                        text:
+                                            '${carritoCompras[index]["nombre"].toString()}\n',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                  ]),
+                            ),
+                            RichText(
+                              maxLines: 1,
+                              text: TextSpan(
+                                  text: 'Precio: ' r"$",
+                                  style: TextStyle(
+                                      color: Colors.blueGrey.shade800,
+                                      fontSize: 16.0),
+                                  children: [
+                                    TextSpan(
+                                        text: carritoCompras[index]["precio"]
+                                            .toString(),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                  ]),
+                            ),
+                          ],
+                        ),
+                      ),
+                    
+                      Text(getCantidad(index)),
+                      
+                    ],
+                  ),
+                ),
+              );
+            }),
+      ),
+      floatingActionButton: ButtonTheme(
+        minWidth: 400,
+        height: 500,
+        child:ElevatedButton.icon(
+        label: Text("Cobrar: "+getTotal().toString()),
+        style: ElevatedButton.styleFrom(
+                fixedSize: const Size(240, 80), backgroundColor: Color.fromARGB(255, 34, 255, 63)),
+        icon: Icon(Icons.arrow_circle_right_sharp),
+        onPressed: () => {
+          
+          carritoCompras.forEach((element) => {
+                  http.put(
+                  Uri.parse('http://localhost:3000/mongo/'+ element["id"]),
+                  body: jsonEncode(<String, int>{
+                    'stock': (element["stock"] - element["cantidad"]),
+                  }),
+                  
+              ),
+              print(element["stock"] - element["cantidad"]),
+          }),
+          mesasLista?[0] = false,
+          (context as Element).markNeedsBuild(),
+          
+          Navigator.pop(context)
+
+        },
+      )),
+
+    );
+  }
+}
 class MesasWidget extends StatelessWidget {
   String getEstadoMesa(index) {
     if (mesasLista?[index]["estado"] == false) {
-      return 'Disponible';
+      return "Disponible";
     } else {
       return "En uso";
     }
@@ -644,7 +815,7 @@ class MesasWidget extends StatelessWidget {
                                           fontSize: 16.0),
                                       children: [
                                         TextSpan(
-                                            text: getEstadoMesa(index),
+                                            text: 'En uso',
                                             style: const TextStyle(
                                                 fontWeight: FontWeight.bold)),
                                       ]),
@@ -652,12 +823,21 @@ class MesasWidget extends StatelessWidget {
                               ],
                             ),
                           ),
-                          FloatingActionButton(
-                              child: Icon(Icons.add, color: Colors.black87),
-                              backgroundColor: Colors.white,
-                              onPressed: () {
-                                contStock++;
-                              })
+                          ButtonTheme(
+                            minWidth: 400,
+                            height: 500,
+                            child:ElevatedButton.icon(
+                            label: Text("Ver Comanda"),
+                            style: ElevatedButton.styleFrom(
+                                    fixedSize: const Size(240, 80), backgroundColor: Color.fromARGB(255, 170, 255, 34)),
+                            icon: Icon(Icons.arrow_circle_right_sharp),
+                            onPressed: () => {
+                              Navigator.push(context,
+                                        MaterialPageRoute(builder: (context) => ComandaMesasWidget()))
+                              
+                            },
+                          )),
+                          
                         ],
                       ),
                     ),
