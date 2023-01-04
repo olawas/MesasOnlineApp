@@ -1,5 +1,4 @@
 /*
-
   Lista de funcionalidades a aplicar:
     * Acceder a la camara: 
     * Crear QR para una mesa:
@@ -18,18 +17,21 @@
       botones para crear QR o cobrar)
     * Cobrar Mesero  (Muestra el precio total a cobrar al cliente mas un boton precio
       donde el Mesero  indica que se realizo el cobro)
-
 */
 
+import 'dart:html';
+
 import 'package:flutter/material.dart';
+
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
-import 'package:quantity_input/quantity_input.dart';
 
-List? carritoCompras = [];
-List? mesasLista = [];
+List carritoCompras = [];
+List? cantidadComprar = [];
+List? mesasLista;
+
 void main() {
   runApp(
     MaterialApp(home: HomePage()),
@@ -44,19 +46,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   Map? data;
   List? productosData;
-  bool _value = false;
-  int auxCarrito = 0;
-  void saveData(int index) {
-    carritoCompras?.add(productosData?[index]);
-    debugPrint("$carritoCompras");
-    auxCarrito++;
-  }
-
-  void removeData(int index) {
-    carritoCompras?.remove(index);
-    debugPrint("$carritoCompras");
-    auxCarrito--;
-  }
 
   void buttonA() {
     debugPrint("Se apretooo");
@@ -72,15 +61,31 @@ class _HomePageState extends State<HomePage> {
         await http.get(Uri.parse('http://localhost:3000/mongo/get'));
     setState(() {
       productosData = json.decode(response.body) as List;
+      
     });
   }
 
   getMesas() async {
     http.Response response =
-        await http.get(Uri.parse('http://localhost:3000/mongo/mesas/get'));
+        await http.get(Uri.parse('http://localhost:3000/mongo/mesa/get'));
     setState(() {
       mesasLista = json.decode(response.body) as List;
+      print("\nMesas: \n");
+      print(mesasLista?.length);
+      print(mesasLista?[0]["estado"]);
+
     });
+  }
+
+  getIdCarrito(i) {
+    var find = carritoCompras.firstWhere(
+        (element) => element["id"] == productosData?[i]["_id"],
+        orElse: () => false);
+    if (find == false) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
   @override
@@ -109,6 +114,10 @@ class _HomePageState extends State<HomePage> {
         child: Scaffold(
             appBar: AppBar(
               title: Text('Carta'),
+              actions: <Widget>[
+                IconButton(onPressed: (){ Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => PrincipalWidget()));}, icon: Icon(Icons.add_to_home_screen_sharp))
+              ],
               bottom: const TabBar(
                 tabs: <Widget>[
                   Tab(
@@ -130,8 +139,8 @@ class _HomePageState extends State<HomePage> {
                     itemCount: productosData?.length,
                     itemBuilder: (BuildContext context, int index) {
                       if (productosData?[index]["tipo"] == "1") {
-                        bool selected = false;
-                        bool select = true;
+                        var selected = false;
+                        const bool select = true;
                         return Card(
                           color: Colors.blueGrey.shade200,
                           elevation: 5.0,
@@ -142,7 +151,7 @@ class _HomePageState extends State<HomePage> {
                               mainAxisSize: MainAxisSize.max,
                               children: [
                                 SizedBox(
-                                  width: 130,
+                                  width: 300,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -206,30 +215,31 @@ class _HomePageState extends State<HomePage> {
                                   style: ElevatedButton.styleFrom(
                                       primary: Colors.blueGrey.shade900),
                                   onPressed: () {
-                                    int remove = 0;
-
-                                    for (int i = 0; i < auxCarrito; i++) {
-                                      if (carritoCompras?[i] ==
-                                          productosData?[index]) {
-                                        select = false;
-                                        remove = i;
-                                      }
-                                    }
                                     setState(() {
-                                      if (select == true) {
-                                        saveData(index);
-                                        selected = true;
-                                        print(selected);
+                                      if (getIdCarrito(index)) {
+                                        carritoCompras.removeWhere((element) =>
+                                            element["id"] ==
+                                            productosData?[index]["_id"]);
                                       } else {
-                                        removeData(remove);
-                                        selected = false;
+                                        carritoCompras.add({
+                                          'id': productosData?[index]["_id"],
+                                          'nombre': productosData?[index]
+                                              ["nombre"],
+                                          'precio': 
+                                            productosData?[index]["precio"]
+                                          ,
+                                          'stock': productosData?[index]
+                                              ["stock"],
+                                          'cantidad': 1
+                                        });
                                       }
                                     });
                                   },
                                   child: Icon(
                                     Icons.favorite,
-                                    color:
-                                        (selected) ? Colors.pink : Colors.white,
+                                    color: (getIdCarrito(index))
+                                        ? Colors.red
+                                        : Colors.white,
                                   ),
                                 ),
                               ],
@@ -255,7 +265,7 @@ class _HomePageState extends State<HomePage> {
                               mainAxisSize: MainAxisSize.max,
                               children: [
                                 SizedBox(
-                                  width: 130,
+                                  width: 300,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -316,12 +326,36 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                                 ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                        primary: Colors.blueGrey.shade900),
-                                    onPressed: () {
-                                      saveData(index);
-                                    },
-                                    child: const Text('Añadir a comanda!')),
+                                  style: ElevatedButton.styleFrom(
+                                      primary: Colors.blueGrey.shade900),
+                                  onPressed: () {
+                                    setState(() {
+                                      if (getIdCarrito(index)) {
+                                        carritoCompras.removeWhere((element) =>
+                                            element["id"] ==
+                                            productosData?[index]["_id"]);
+                                      } else {
+                                        carritoCompras.add({
+                                          'id': productosData?[index]["_id"],
+                                          'nombre': productosData?[index]
+                                              ["nombre"],
+                                          'precio': 
+                                            productosData?[index]["precio"]
+                                          ,
+                                          'stock': productosData?[index]
+                                              ["stock"],
+                                          'cantidad': 1
+                                        });
+                                      }
+                                    });
+                                  },
+                                  child: Icon(
+                                    Icons.favorite,
+                                    color: (getIdCarrito(index))
+                                        ? Colors.red
+                                        : Colors.white,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -345,7 +379,7 @@ class _HomePageState extends State<HomePage> {
                               mainAxisSize: MainAxisSize.max,
                               children: [
                                 SizedBox(
-                                  width: 130,
+                                  width: 300,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -406,12 +440,36 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                                 ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                        primary: Colors.blueGrey.shade900),
-                                    onPressed: () {
-                                      saveData(index);
-                                    },
-                                    child: const Text('Añadir a comanda!')),
+                                  style: ElevatedButton.styleFrom(
+                                      primary: Colors.blueGrey.shade900),
+                                  onPressed: () {
+                                    setState(() {
+                                      if (getIdCarrito(index)) {
+                                        carritoCompras.removeWhere((element) =>
+                                            element["id"] ==
+                                            productosData?[index]["_id"]);
+                                      } else {
+                                        carritoCompras.add({
+                                          'id': productosData?[index]["_id"],
+                                          'nombre': productosData?[index]
+                                              ["nombre"],
+                                          'precio': 
+                                            productosData?[index]["precio"]
+                                          ,
+                                          'stock': productosData?[index]
+                                              ["stock"],
+                                          'cantidad': 1
+                                        });
+                                      }
+                                    });
+                                  },
+                                  child: Icon(
+                                    Icons.favorite,
+                                    color: (getIdCarrito(index))
+                                        ? Colors.red
+                                        : Colors.white,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -421,87 +479,6 @@ class _HomePageState extends State<HomePage> {
                     }),
               ),
             ]),
-            /*ListView.builder(
-              itemCount: productosData?.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Card(
-                  color: Colors.blueGrey.shade200,
-                  elevation: 5.0,
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        SizedBox(
-                          width: 130,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(
-                                height: 5.0,
-                              ),
-                              RichText(
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                                text: TextSpan(
-                                    text: 'Nombre: ',
-                                    style: TextStyle(
-                                        color: Colors.blueGrey.shade800,
-                                        fontSize: 16.0),
-                                    children: [
-                                      TextSpan(
-                                          text:
-                                              '${productosData?[index]["nombre"].toString()}\n',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                    ]),
-                              ),
-                              RichText(
-                                maxLines: 1,
-                                text: TextSpan(
-                                    text: 'Quedan: ',
-                                    style: TextStyle(
-                                        color: Colors.blueGrey.shade800,
-                                        fontSize: 16.0),
-                                    children: [
-                                      TextSpan(
-                                          text:
-                                              '${productosData?[index]["stock"].toString()}\n',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                    ]),
-                              ),
-                              RichText(
-                                maxLines: 1,
-                                text: TextSpan(
-                                    text: 'Precio: ' r"$",
-                                    style: TextStyle(
-                                        color: Colors.blueGrey.shade800,
-                                        fontSize: 16.0),
-                                    children: [
-                                      TextSpan(
-                                          text:
-                                              '${productosData?[index]["precio"].toString()}\n',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                    ]),
-                              ),
-                            ],
-                          ),
-                        ),
-                        ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                                primary: Colors.blueGrey.shade900),
-                            onPressed: () {
-                              saveData(index);
-                            },
-                            child: const Text('Añadir a comanda!')),
-                      ],
-                    ),
-                  ),
-                );
-              }),*/
             floatingActionButton: FloatingActionButton(
               onPressed: () => {
                 Navigator.push(context,
@@ -512,27 +489,57 @@ class _HomePageState extends State<HomePage> {
             )));
   }
 }
-
+class PrincipalWidget extends StatelessWidget{
+  @override 
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Principal"),
+        actions: <Widget>[
+          IconButton(onPressed: (){ Navigator.pop(context);}, icon: Icon(Icons.add_to_home_screen_sharp))
+        ],
+      ),
+      body: Center(
+        child: Text(
+        "Bienvenido a MesasOnlineApp",
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 40.0,
+        ),
+      ),
+    ),
+    floatingActionButton: ButtonTheme(
+        minWidth: 400,
+        height: 500,
+        child:ElevatedButton.icon(
+        label: Text("Soy Garzon"),
+        style: ElevatedButton.styleFrom(
+                fixedSize: const Size(240, 80), backgroundColor: Colors.deepOrange),
+        icon: Icon(Icons.arrow_circle_right_sharp),
+        onPressed: () => {
+          Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => MesasWidget()))
+          
+        },
+      )),
+    );
+  }
+}
 class ComandaWidget extends StatelessWidget {
-<<<<<<< Updated upstream
-=======
   String getCantidad(a) {
     return carritoCompras[a]["cantidad"].toString();
   }
-
-  String getPrecioTotal() {
+  int getTotal(){
     int total = 0;
-    for (int i = 0; i <= carritoCompras.length; i++) {
-      /*int cantidad = carritoCompras[i]["cantidad"];
-      int precio = carritoCompras[i]["precio"];
-      int totalProducto = cantidad * precio;
-      total += totalProducto;*/
-      print(carritoCompras[i]["precio"]);
-    }
-    return total.toString();
+    carritoCompras.forEach((element) {
+      int precio = element["precio"];
+      int cantidad = element["cantidad"];
+      total += precio*cantidad;
+      
+    });
+    return total;
+    
   }
-
->>>>>>> Stashed changes
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -540,167 +547,222 @@ class ComandaWidget extends StatelessWidget {
         title: Text("Comanda"),
       ),
       body: Center(
-<<<<<<< Updated upstream
-        child: ElevatedButton(
-            onPressed: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => MesasWidget()));
-              debugPrint("$mesasLista");
-            },
-            child: ListView.builder(
-                itemCount: carritoCompras?.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return Card(
-                    color: Colors.blueGrey.shade200,
-                    elevation: 5.0,
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          SizedBox(
-                            width: 130,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(
-                                  height: 5.0,
-                                ),
-                                RichText(
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                  text: TextSpan(
-                                      text: 'Nombre: ',
-                                      style: TextStyle(
-                                          color: Colors.blueGrey.shade800,
-                                          fontSize: 16.0),
-                                      children: [
-                                        TextSpan(
-                                            text:
-                                                '${carritoCompras?[index]["nombre"].toString()}\n',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold)),
-                                      ]),
-                                ),
-                                RichText(
-                                  maxLines: 1,
-                                  text: TextSpan(
-                                      text: 'Precio: ' r"$",
-                                      style: TextStyle(
-                                          color: Colors.blueGrey.shade800,
-                                          fontSize: 16.0),
-                                      children: [
-                                        TextSpan(
-                                            text:
-                                                '${carritoCompras?[index]["precio"].toString()}',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold)),
-                                      ]),
-                                ),
-                              ],
+        child: ListView.builder(
+            itemCount: carritoCompras.length,
+            itemBuilder: (BuildContext contex1, int index) {
+              //cantidad?[index] = 1;
+              return Card(
+                color: Colors.blueGrey.shade200,
+                elevation: 5.0,
+                child: Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      SizedBox(
+                        width: 300,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(
+                              height: 5.0,
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                })),
-=======
-        child: Row(children: <Widget>[
-          ListView.builder(
-              itemCount: carritoCompras.length,
-              itemBuilder: (BuildContext context, int index) {
-                //cantidad?[index] = 1;
-                return Card(
-                  color: Colors.blueGrey.shade200,
-                  elevation: 5.0,
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        SizedBox(
-                          width: 300,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(
-                                height: 5.0,
-                              ),
-                              RichText(
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                                text: TextSpan(
-                                    text: 'Nombre: ',
-                                    style: TextStyle(
-                                        color: Colors.blueGrey.shade800,
-                                        fontSize: 16.0),
-                                    children: [
-                                      TextSpan(
-                                          text:
-                                              '${carritoCompras[index]["nombre"].toString()}\n',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                    ]),
-                              ),
-                              RichText(
-                                maxLines: 1,
-                                text: TextSpan(
-                                    text: 'Precio: ' r"$",
-                                    style: TextStyle(
-                                        color: Colors.blueGrey.shade800,
-                                        fontSize: 16.0),
-                                    children: [
-                                      TextSpan(
-                                          text: carritoCompras[index]["precio"]
-                                              .toString(),
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                    ]),
-                              ),
-                            ],
-                          ),
+                            RichText(
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              text: TextSpan(
+                                  text: 'Nombre: ',
+                                  style: TextStyle(
+                                      color: Colors.blueGrey.shade800,
+                                      fontSize: 16.0),
+                                  children: [
+                                    TextSpan(
+                                        text:
+                                            '${carritoCompras[index]["nombre"].toString()}\n',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                  ]),
+                            ),
+                            RichText(
+                              maxLines: 1,
+                              text: TextSpan(
+                                  text: 'Precio: ' r"$",
+                                  style: TextStyle(
+                                      color: Colors.blueGrey.shade800,
+                                      fontSize: 16.0),
+                                  children: [
+                                    TextSpan(
+                                        text: carritoCompras[index]["precio"]
+                                            .toString(),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                  ]),
+                            ),
+                          ],
                         ),
-                        FloatingActionButton(
-                            onPressed: () {
-                              carritoCompras[index]["cantidad"]--;
-                              (context as Element).markNeedsBuild();
-                            },
-                            child: const Icon(Icons.remove)),
-                        Text(getCantidad(index)),
-                        FloatingActionButton(
-                            onPressed: () {
-                              carritoCompras[index]["cantidad"]++;
-                              (context as Element).markNeedsBuild();
-                            },
-                            child: const Icon(Icons.add)),
-                      ],
-                    ),
+                      ),
+                      FloatingActionButton(
+                          onPressed: () {
+                            carritoCompras[index]["cantidad"]--;
+                            (context as Element).markNeedsBuild();
+                            
+                          },
+                          child: const Icon(Icons.remove)),
+                      Text(getCantidad(index)),
+                      FloatingActionButton(
+                          onPressed: () {
+                            carritoCompras[index]["cantidad"]++;
+                            (context as Element).markNeedsBuild();
+                          },
+                          child: const Icon(Icons.add)),
+                    ],
                   ),
-                );
-              }),
-          Text("Hola")
-        ]),
+                ),
+              );
+            }),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: ButtonTheme(
+        minWidth: 400,
+        height: 500,
+        child:ElevatedButton.icon(
+        label: Text(getTotal().toString()),
+        style: ElevatedButton.styleFrom(
+                fixedSize: const Size(240, 80), backgroundColor: Colors.deepOrange),
+        icon: Icon(Icons.arrow_circle_right_sharp),
         onPressed: () => {
-          Navigator.push(
-              context, MaterialPageRoute(builder: (context) => ComandaWidget()))
+          
+          (context as Element).markNeedsBuild(),
+          Navigator.pop(context)
         },
-        backgroundColor: Colors.green,
-        child: const Icon(Icons.bookmark_sharp),
->>>>>>> Stashed changes
-      ),
+      )),
+
     );
   }
 }
+class ComandaMesasWidget extends StatelessWidget {
+  String getCantidad(a) {
+    return carritoCompras[a]["cantidad"].toString();
+  }
+  int getTotal(){
+    int total = 0;
+    carritoCompras.forEach((element) {
+      int precio = element["precio"];
+      int cantidad = element["cantidad"];
+      total += precio*cantidad;
+      
+    });
+    return total;
+    
+  }
 
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Comanda Mesa 1"),
+      ),
+      body: Center(
+        child: ListView.builder(
+            itemCount: carritoCompras.length,
+            itemBuilder: (BuildContext contex1, int index) {
+              //cantidad?[index] = 1;
+              return Card(
+                color: Colors.blueGrey.shade200,
+                elevation: 5.0,
+                child: Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      SizedBox(
+                        width: 300,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(
+                              height: 5.0,
+                            ),
+                            RichText(
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              text: TextSpan(
+                                  text: 'Nombre: ',
+                                  style: TextStyle(
+                                      color: Colors.blueGrey.shade800,
+                                      fontSize: 16.0),
+                                  children: [
+                                    TextSpan(
+                                        text:
+                                            '${carritoCompras[index]["nombre"].toString()}\n',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                  ]),
+                            ),
+                            RichText(
+                              maxLines: 1,
+                              text: TextSpan(
+                                  text: 'Precio: ' r"$",
+                                  style: TextStyle(
+                                      color: Colors.blueGrey.shade800,
+                                      fontSize: 16.0),
+                                  children: [
+                                    TextSpan(
+                                        text: carritoCompras[index]["precio"]
+                                            .toString(),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                  ]),
+                            ),
+                          ],
+                        ),
+                      ),
+                    
+                      Text(getCantidad(index)),
+                      
+                    ],
+                  ),
+                ),
+              );
+            }),
+      ),
+      floatingActionButton: ButtonTheme(
+        minWidth: 400,
+        height: 500,
+        child:ElevatedButton.icon(
+        label: Text("Cobrar: "+getTotal().toString()),
+        style: ElevatedButton.styleFrom(
+                fixedSize: const Size(240, 80), backgroundColor: Color.fromARGB(255, 34, 255, 63)),
+        icon: Icon(Icons.arrow_circle_right_sharp),
+        onPressed: () => {
+          
+          carritoCompras.forEach((element) => {
+                  http.put(
+                  Uri.parse('http://localhost:3000/mongo/'+ element["id"]),
+                  body: jsonEncode(<String, int>{
+                    'stock': (element["stock"] - element["cantidad"]),
+                  }),
+                  
+              ),
+              print(element["stock"] - element["cantidad"]),
+          }),
+          mesasLista?[0] = false,
+          (context as Element).markNeedsBuild(),
+          
+          Navigator.pop(context)
+
+        },
+      )),
+
+    );
+  }
+}
 class MesasWidget extends StatelessWidget {
   String getEstadoMesa(index) {
     if (mesasLista?[index]["estado"] == false) {
-      return 'Disponible';
+      return "Disponible";
     } else {
       return "En uso";
     }
@@ -763,7 +825,7 @@ class MesasWidget extends StatelessWidget {
                                           fontSize: 16.0),
                                       children: [
                                         TextSpan(
-                                            text: getEstadoMesa(index),
+                                            text: 'En uso',
                                             style: const TextStyle(
                                                 fontWeight: FontWeight.bold)),
                                       ]),
@@ -771,12 +833,21 @@ class MesasWidget extends StatelessWidget {
                               ],
                             ),
                           ),
-                          FloatingActionButton(
-                              child: Icon(Icons.add, color: Colors.black87),
-                              backgroundColor: Colors.white,
-                              onPressed: () {
-                                contStock++;
-                              })
+                          ButtonTheme(
+                            minWidth: 400,
+                            height: 500,
+                            child:ElevatedButton.icon(
+                            label: Text("Ver Comanda"),
+                            style: ElevatedButton.styleFrom(
+                                    fixedSize: const Size(240, 80), backgroundColor: Color.fromARGB(255, 170, 255, 34)),
+                            icon: Icon(Icons.arrow_circle_right_sharp),
+                            onPressed: () => {
+                              Navigator.push(context,
+                                        MaterialPageRoute(builder: (context) => ComandaMesasWidget()))
+                              
+                            },
+                          )),
+                          
                         ],
                       ),
                     ),
